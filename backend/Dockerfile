@@ -9,7 +9,8 @@ RUN pip install --user -r requirements.txt
 FROM python:3.11-slim-bookworm AS runtime
 WORKDIR /app
 # bring the installed packages over
-COPY --from=builder:/root/.local /root/.local   
+# COPY --from=builder:/root/.local /root/.local   
+COPY --from=builder /root/.local /root/.local
 ENV PATH=/root/.local/bin:$PATH
 COPY requirements.txt .
 COPY app.py .
