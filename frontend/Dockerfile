@@ -9,5 +9,7 @@ RUN npm run build
 # STEP 2: runtime
 FROM nginx:alpine AS runtime
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY templates/default.conf.template /etc/nginx/templates/default.conf.template
+ENV APP_UPSTREAM=backend:5000
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80

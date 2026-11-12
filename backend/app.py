@@ -13,6 +13,7 @@ DB_CONFIG = {
     "dbname": os.environ.get("POSTGRES_DB", "appdb"),
     "user": os.environ.get("POSTGRES_USER", "appuser"),
     "password": os.environ.get("POSTGRES_PASSWORD", "apppass"),
+    "sslmode": os.environ.get("POSTGRES_SSLMODE", "prefer"),
 }
 
 
@@ -23,6 +24,7 @@ def get_conn():
         dbname=DB_CONFIG["dbname"],
         user=DB_CONFIG["user"],
         password=DB_CONFIG["password"],
+        sslmode=DB_CONFIG["sslmode"],
         connect_timeout=5,
     )
 
