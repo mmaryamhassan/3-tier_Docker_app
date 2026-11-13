@@ -1,0 +1,57 @@
+name: CI-CD
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create .env for test (dummy credentials)
+        run: cp .env.example .env
+      - name: Start stack
+        run: docker compose up -d --build --wait
+      - name: Run smoke tests
+        run: bash scripts/smoke_test.sh http://localhost:8081 FIELD_NAME_HERE
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push images
+        run: |
+          OWNER=${GITHUB_REPOSITORY_OWNER,,}
+          docker build -t ghcr.io/$OWNER/notes-app:latest -t ghcr.io/$OWNER/notes-app:${{ github.sha }} ./backend
+          docker build -t ghcr.io/$OWNER/notes-web:latest -t ghcr.io/$OWNER/notes-web:${{ github.sha }} ./frontend
+          docker push --all-tags ghcr.io/$OWNER/notes-app
+          docker push --all-tags ghcr.io/$OWNER/notes-web
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Redeploy scale sets and health check
+        run: bash infra/redeploy.sh
