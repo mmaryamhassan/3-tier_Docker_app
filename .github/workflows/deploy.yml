@@ -16,7 +16,7 @@ jobs:
       - name: Start stack
         run: docker compose up -d --build --wait
       - name: Run smoke tests
-        run: bash scripts/smoke_test.sh http://localhost:8081 FIELD_NAME_HERE
+        run: bash scripts/smoke_test.sh http://localhost:8081 name
       - name: Show logs on failure
         if: failure()
         run: docker compose logs
